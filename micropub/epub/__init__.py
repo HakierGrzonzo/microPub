@@ -1,6 +1,7 @@
 import zipfile
 from bs4 import BeautifulSoup as Soup
 from bs4 import Tag
+import re
 
 class Epub():
     def __init__(self, filename):
@@ -23,6 +24,10 @@ class Epub():
                 contentFile = self.file.read(filename).decode("UTF-8")
                 if filename != "content.opf":
                     self.prefix = filename[:-len("content.opf")]
+            elif filename.endswith("volume.opf"):
+                contentFile = self.file.read(filename).decode("UTF-8")
+                if filename != "volume.opf":
+                    self.prefix = filename[:-len("volume.opf")]
             elif filename.endswith("toc.ncx"):
                 tocFile = self.file.read(filename).decode("UTF-8")
         if not contentFile:
@@ -42,34 +47,48 @@ class Epub():
             if isinstance(itemref, Tag):
                 self.id_to_file[itemref["id"]] = itemref["href"]
 
-        self.file_to_content = dict()
+        self.files = dict()
         # parse <spine>
         self.spine = list()
         for itemref in contentSoup.find("spine").children:
             if isinstance(itemref, Tag):
                 href = self.id_to_file[itemref["idref"]]
                 content = self.file.read(self.prefix + href).decode("UTF-8")
-                self.spine.append(content)
-                self.file_to_content[href] = content
-                
+                item = EpubItem(href, content)
+                self.spine.append(item)
+                self.files[href] = item
 
         # parse toc.ncx
         if tocFile:
             tocFile = False # TODO: parse toc
 
-    def get(self, href):
+    def get(self, href, relative_to = None):
+        if relative_to and "/" in relative_to:
+            relPath = relative_to.split("/")[:-1]
+            path = href
+            href = ""
+            for x in relPath:
+                href += x + "/"
+            href += path
+        
+        href = re.sub(r"[^\/]+\/\.\.\/", "", href)
+        print(href)
+
         try:
-            return self.file_to_content[href]
+            return self.files[href].content
         except KeyError:
-            if href in [x[1] for x in self.id_to_file.items()]:
+            try:
                 content = self.file.read(self.prefix + href).decode("UTF-8")
-                self.file_to_content[href] = content
-            else:
+                self.files[href] = EpubItem(href, content)
+                return content
+            except:
                 raise FileNotFoundError("{} does not exist in this epub".format(self.prefix + href))
             
 
-                
-
+class EpubItem:
+    def __init__(self, filename, content):
+        self.filename = filename
+        self.content = content
 
 
         
