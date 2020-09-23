@@ -72,7 +72,6 @@ class Epub():
             href += path
         
         href = re.sub(r"[^\/]+\/\.\.\/", "", href)
-        print(href)
 
         try:
             return self.files[href].content
