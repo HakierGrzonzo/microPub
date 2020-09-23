@@ -21,5 +21,6 @@ class Renderer:
             else:
                 self.styles.append(self.cssCache[link["href"]])
         self.element = Element(self.soup.find("body"), self) 
-        print(json.dumps(self.element.debug(), indent=4))
-        
+    
+    def render(self, window):
+        pass

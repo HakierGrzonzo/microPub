@@ -1,7 +1,7 @@
 from micropub.epub import Epub
 from micropub.renderer import Renderer
 from micropub.renderer.cssParser import Parser
-import sys, os
+import sys, os, curses, time
 
 def main():
     baseSheet = list()
@@ -13,10 +13,26 @@ def main():
 
     ebook = Epub(sys.argv[1])
     cache = dict()
+    chapters = list()
     for element in ebook.spine:
-        print("\n", element.filename)
-        renderer = Renderer(element, ebook.get, cache, baseSheet)
-        input()
+        chapters.append(Renderer(element, ebook.get, cache, baseSheet))
+    try:
+        stdscr = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        stdscr.keypad(True)
+        stdscr.clear()
+        stdscr.refresh()
+        rows, cols = stdscr.getmaxyx()
+
+        tooltip = curses.newwin(1, cols, rows -1, 0)
+        tooltip.addstr(0, 0, "µPub v.0".center(cols - 1), curses.A_REVERSE)
+        tooltip.refresh()
+
+        time.sleep(1)
+    finally:
+        curses.endwin()
+
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup as Soup
 from bs4 import Tag
 from micropub.renderer.text import Text
+
 class Element:
     def __init__(self, tag, renderer, parent = None):
         self.renderer = renderer
@@ -30,7 +31,3 @@ class Element:
             else:
                 res["children"].append(child.textNode)
         return res
-
-
-
-
