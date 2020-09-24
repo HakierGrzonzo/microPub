@@ -49,8 +49,19 @@ def unitDecoder(text):
     try:
         return int(number * scale * unit_to_char_dict[unit])
     except KeyError:
+        if unit.strip() == "":
+            return number
         return 1
 
-
+def parseInTag(tag):
+    styleText = tag.get("style")
+    if styleText is None:
+        return dict()
+    else:
+        styleArr = [x.split(":", 1) for x in styleText.strip(" ;\t\n").split(";")]
+        res = dict()
+        for key, value in styleArr:
+            res[key.strip()] = value.strip()
+        return res
 
 

@@ -1,7 +1,7 @@
 from micropub.epub import Epub
 from micropub.renderer import Renderer
 from micropub.renderer.cssParser import Parser
-import sys, os, curses, time
+import sys, os, curses, time, json
 
 def main():
     baseSheet = list()
@@ -15,7 +15,8 @@ def main():
     cache = dict()
     chapters = list()
     for element in ebook.spine:
-        chapters.append(Renderer(element, ebook.get, cache, baseSheet))
+        chapter = Renderer(element, ebook.get, cache, baseSheet)
+        chapters.append(chapter)
     try:
         stdscr = curses.initscr()
         curses.noecho()
@@ -29,7 +30,10 @@ def main():
         tooltip.addstr(0, 0, "µPub v.0".center(cols - 1), curses.A_REVERSE)
         tooltip.refresh()
 
-        time.sleep(1)
+        readerWindow = curses.newwin(rows - 1, cols, 0, 0)
+        chapters[0].render(readerWindow)
+
+        time.sleep(5)
     finally:
         curses.endwin()
 

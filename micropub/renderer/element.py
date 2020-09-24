@@ -8,26 +8,42 @@ class Element:
         self.parent = parent
         self.tag = tag
         self.children = list()
+        self.style = self.renderer.resolveStyle(self)
+        self.display = self.style.get("display", "inline")
         for child in tag.children:
             if isinstance(child, Tag):
                 self.children.append(Element(child, renderer, self))
             else:
                 self.children.append(Text(child, self))
 
-    def debug(self):
-        res = {
-            "name" : "{}.{}".format(self.tag.name, self.tag.get("class", str())),
-            "styles" : list(),
-            "children" : list()
-        }
-        for stylesheet in self.renderer.styles:
-            rules = stylesheet.getStyle(self.tag) 
-            if len(rules.keys()) > 1:
-                res["styles"].append(list(["{}: {}".format(x, rules[x]) for x in rules.keys()]))
-        res["children"] = list()
-        for child in self.children:
-            if isinstance(child, Element):
-                res["children"].append(child.debug())
-            else:
-                res["children"].append(child.textNode)
-        return res
+    def render(self, force_inline = False):
+        if self.display != "inline" and not force_inline:
+            # handle block elements
+            contents = list()
+            lastParagraph = list()
+            for child in self.children:
+                if isinstance(child, Text):
+                    lastParagraph.append(child)
+                elif child.display == "inline":
+                    childContent = child.render(force_inline)
+                    lastParagraph += childContent
+                else:
+                    childContent = child.render(force_inline)
+                    if len(lastParagraph) > 0:
+                        contents.append(lastParagraph)
+                        lastParagraph = list()
+                    contents.append(childContent)
+            if len(lastParagraph) > 0:
+                contents.append(lastParagraph)
+            return contents
+        else:
+            # handle inline elements
+            contents = list()
+            for child in self.children:
+                if isinstance(child, Text):
+                    contents.append(child)
+                else:
+                    childContent = child.render(force_inline = True)
+                    contents += childContent
+            return contents
+
